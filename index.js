@@ -41,7 +41,7 @@ async function run() {
          //console.log("user order information", result);
         res.json(result);
       });
-//get api for individual data
+//get api for individual data using email
       app.get("/createteam", async (req, res) => {
         const email = req.query.email;
         console.log(email)
@@ -49,9 +49,51 @@ async function run() {
        //  console.log(query);
         const cursor = createTeamCollection.find(query);
         const individualTeam = await cursor.toArray();
+
+
   
         res.send(individualTeam);
       });
+   // get api for individual data using id
+      app.get("/createteam/:id", async (req, res) => {
+        const id=req.params.id;
+        const query = { _id: ObjectId(id) };
+        const cursor = createTeamCollection.find(query);
+        const individualTeamById = await cursor.toArray();
+       
+
+        res.send(individualTeamById)
+      });
+
+
+      // put api to update data
+      app.put("/createteam/:id", async (req, res) => {
+        const id=req.params.id;
+        const updateTeam=req.body;
+        console.log(updateTeam)
+        const filter = { _id: ObjectId(id) };
+     const option={upsert:true};
+     const updateDoc={$set:{
+
+
+      destination:updateTeam.destination,
+      teamMember:updateTeam.teamMember,
+      neededMember:updateTeam.neededMember,
+      startDate:updateTeam.startDate,
+      endDate:updateTeam.endDate
+     
+     
+
+    
+     }}
+
+     const result= await createTeamCollection.updateOne(filter,updateDoc,option);
+
+     res.json(result)
+      });
+
+
+
 //delte api for deleting team
       app.delete("/allcreteteam/:id", async (req, res) => {
         const id = req.params.id;
