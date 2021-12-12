@@ -76,6 +76,8 @@ async function run() {
       app.put("/allcreateteam/:id", async (req, res) => {
       const id=req.params.id ;
       const updateTeam=req.body.neededMember;
+      const updateTotalMember=req.body.teamMember;
+
      
      
      const filter = { _id: ObjectId(id) };
@@ -84,6 +86,9 @@ async function run() {
 
 
       neededMember:updateTeam,
+      teamMember:updateTotalMember,
+     
+
       disabled:true
      }}
 
