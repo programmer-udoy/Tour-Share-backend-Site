@@ -28,6 +28,7 @@ async function run() {
       const createTeamCollection = database.collection("createTeam");
       const joinTeamCollection = database.collection("joinTeam");
       const userCollection=database.collection("systemUserCollection");
+      const trandingCollection=database.collection("trandingSection");
 
 
 
@@ -218,6 +219,15 @@ async function run() {
       //console.log(services);
       res.send({ admin: isAdmin });
     });
+
+    //tranding section get 
+
+    app.get("/tranding",async(req,res)=>{
+      const cursor = trandingCollection.find({});
+      const trandingPlace = await cursor.toArray();
+      res.send(trandingPlace);
+
+    })
     } finally {
       
      // await client.close();
