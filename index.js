@@ -228,6 +228,15 @@ async function run() {
       res.send(trandingPlace);
 
     })
+
+ 
+    app.post("/tranding",async(req,res)=>{
+
+      const newTrandingPlace=req.body;
+      console.log(newTrandingPlace)
+      const result = await trandingCollection.insertOne(newTrandingPlace);
+      res.json(result);
+    })
     } finally {
       
      // await client.close();
