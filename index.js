@@ -29,6 +29,7 @@ async function run() {
       const joinTeamCollection = database.collection("joinTeam");
       const userCollection=database.collection("systemUserCollection");
       const trandingCollection=database.collection("trandingSection");
+      const nidCollection=database.collection("nidNumber");
 
 
 
@@ -237,6 +238,25 @@ async function run() {
       const result = await trandingCollection.insertOne(newTrandingPlace);
       res.json(result);
     })
+    //nid number section
+
+    app.put("/nid",async(req,res)=>{
+
+      const userNid=req.body;
+      const filter={nidNumber:userNid.nidNumber};
+      const updateDoc={$set:userNid}
+      const option={upsert:true};
+      
+      const result = await nidCollection.updateOne(filter,updateDoc,option);
+      res.json(result);
+    })
+    app.get("/nid",async(req,res)=>{
+      const cursor = nidCollection.find({});
+      const nidNumber = await cursor.toArray();
+      res.send(nidNumber);
+
+    })
+
     } finally {
       
      // await client.close();
