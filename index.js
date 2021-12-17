@@ -56,6 +56,19 @@ async function run() {
   
         res.send(individualTeam);
       });
+      //get api for individual data using teamName
+      app.get("/createteambyTeam", async (req, res) => {
+        const teamName = req.query.teamName;
+        console.log(teamName)
+        const query = { teamName: teamName };
+       //  console.log(query);
+        const cursor = createTeamCollection.find(query);
+        const individualTeam = await cursor.toArray();
+
+
+  
+        res.send(individualTeam);
+      });
    // get api for individual data using id
       app.get("/createteam/:id", async (req, res) => {
         const id=req.params.id;
