@@ -30,6 +30,7 @@ async function run() {
       const userCollection=database.collection("systemUserCollection");
       const trandingCollection=database.collection("trandingSection");
       const nidCollection=database.collection("nidNumber");
+      const hotelsCollection=database.collection("hotels")
 
 
 
@@ -268,6 +269,26 @@ async function run() {
       const nidNumber = await cursor.toArray();
       res.send(nidNumber);
 
+    })
+
+    //hotel section api
+
+    app.get("/hotels",async(req,res)=>{
+      let search=req.query.search;
+      const price=req.query.price;
+      const roomtype=req.query.roomtype.toLowerCase()
+      search = search.replace(/\s+/g, '');
+      
+      console.log(search,price,roomtype)
+      const query={
+        destination:search,
+        price:{$lte:price},
+        rooms:roomtype,
+      
+      }
+      const cursor=hotelsCollection.find(query);
+      const hotels=await cursor.toArray();
+      res.send(hotels)
     })
 
     } finally {
