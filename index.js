@@ -276,14 +276,16 @@ async function run() {
     app.get("/hotels",async(req,res)=>{
       let search=req.query.search;
       const price=req.query.price;
-      const roomtype=req.query.roomtype.toLowerCase()
+      const totalRoom=req.query.totalRoom;
+      const roomtype=req.query.roomtype?.toLowerCase()
       search = search.replace(/\s+/g, '');
       
-      console.log(search,price,roomtype)
+      console.log(search,price,roomtype,totalRoom)
       const query={
         destination:search,
         price:{$lte:price},
         rooms:roomtype,
+        totalRoom:{$lte:totalRoom}
       
       }
       const cursor=hotelsCollection.find(query);
