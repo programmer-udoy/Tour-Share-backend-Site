@@ -2,6 +2,7 @@ const express = require('express')
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
+// const SSLCommerzPayment = require('sslcommerz')
 const { MongoClient } = require("mongodb");
 const port = process.env.PORT || 5000;
 const ObjectId = require("mongodb").ObjectId;
@@ -10,6 +11,7 @@ const ObjectId = require("mongodb").ObjectId;
 //middleware setup
 app.use(cors());
 app.use(express.json()); //convirt data to json format
+app.use(express.urlencoded({ extended: true }));
 
 // mongodb setup
 
@@ -18,6 +20,23 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 //console.log(uri)
 
+//payment initialize api
+
+app.post("/success",async(req,res)=>{
+  console.log(req.body)
+  res.status(200).json(req.body)
+
+})
+app.post("/fail",async(req,res)=>{
+  console.log(req.body)
+  res.status(400).json(req.body)
+
+})
+app.post("/cancel",async(req,res)=>{
+  console.log(req.body)
+  res.status(200).json(req.body)
+
+})
 async function run() {
     try {
      
@@ -280,12 +299,15 @@ async function run() {
       const roomtype=req.query.roomtype?.toLowerCase()
       search = search.replace(/\s+/g, '');
       
-      console.log(search,price,roomtype,totalRoom)
+      console.log(search,price,roomtype,totalRoom,typeof(totalRoom),typeof(price))
       const query={
+        totalRoom:{$gte:totalRoom},
         destination:search,
+      
         price:{$lte:price},
+     
         rooms:roomtype,
-        totalRoom:{$lte:totalRoom}
+        
       
       }
       const cursor=hotelsCollection.find(query);
