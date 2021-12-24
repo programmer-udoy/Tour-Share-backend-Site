@@ -2,10 +2,11 @@ const express = require('express')
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
-// const SSLCommerzPayment = require('sslcommerz')
+const SSLCommerzPayment = require('sslcommerz')
 const { MongoClient } = require("mongodb");
 const port = process.env.PORT || 5000;
 const ObjectId = require("mongodb").ObjectId;
+const { v4: uuidv4 } = require('uuid');
 
 
 //middleware setup
@@ -20,23 +21,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 //console.log(uri)
 
-//payment initialize api
 
-app.post("/success",async(req,res)=>{
-  console.log(req.body)
-  res.status(200).json(req.body)
-
-})
-app.post("/fail",async(req,res)=>{
-  console.log(req.body)
-  res.status(400).json(req.body)
-
-})
-app.post("/cancel",async(req,res)=>{
-  console.log(req.body)
-  res.status(200).json(req.body)
-
-})
 async function run() {
     try {
      
@@ -49,7 +34,8 @@ async function run() {
       const userCollection=database.collection("systemUserCollection");
       const trandingCollection=database.collection("trandingSection");
       const nidCollection=database.collection("nidNumber");
-      const hotelsCollection=database.collection("hotels")
+      const hotelsCollection=database.collection("hotels");
+      const bookingCollection=database.collection("booking")
 
 
 
@@ -301,11 +287,11 @@ async function run() {
       
       console.log(search,price,roomtype,totalRoom,typeof(totalRoom),typeof(price))
       const query={
-        totalRoom:{$gte:totalRoom},
+        
         destination:search,
       
         price:{$lte:price},
-     
+        totalRoom:{$gte:totalRoom},
         rooms:roomtype,
         
       
@@ -314,6 +300,113 @@ async function run() {
       const hotels=await cursor.toArray();
       res.send(hotels)
     })
+ //payment getway api
+ //payment initialize api
+app.post('/init', async (req, res) => {
+  console.log(req.body)
+  const data = {
+      total_amount:req.body.hotelCost,
+      currency: 'BDT',
+      tran_id: uuidv4() ,
+      success_url: 'http://localhost:5000/success',
+      fail_url: 'http://localhost:5000/fail',
+      cancel_url: 'http://localhost:5000/cancel',
+      ipn_url: 'http://localhost:5000/ipn',
+      shipping_method: 'Courier',
+      product_name: req.body.hotelName,
+      product_category: 'Electronic',
+      product_profile: 'general',
+      payment_status:"pending",
+      cus_name: req.body.userName,
+      cus_email: req.body.userEmail,
+      cus_add1: 'Dhaka',
+      cus_add2: 'Dhaka',
+      cus_city: 'Dhaka',
+      cus_state: 'Dhaka',
+      cus_postcode: '1000',
+      cus_country: 'Bangladesh',
+      cus_phone: req.body.phoneNumber,
+      cus_fax: '01711111111',
+      ship_name: 'Customer Name',
+      ship_add1: 'Dhaka',
+      ship_add2: 'Dhaka',
+      ship_city: 'Dhaka',
+      ship_state: 'Dhaka',
+      ship_postcode: 1000,
+      ship_country: 'Bangladesh',
+      multi_card_name: 'mastercard',
+      value_a: 'ref001_A',
+      value_b: 'ref002_B',
+      value_c: 'ref003_C',
+      value_d: 'ref004_D',
+      arrivalTime:req.body.arrivalTime,
+      roomType:req.body.roomType,
+      checkIn:req.body.checkIn,
+      checkOut:req.body.checkOut,
+      totalRoom:req.body.totalRoom,
+      address:req.body.address,
+      
+  };
+   const bookingInfo=bookingCollection.insertOne(data)
+   
+  const sslcommer = new SSLCommerzPayment(process.env.STORE_ID, process.env.STORE_PASSWORD,false) //true for live default false for sandbox
+  sslcommer.init(data).then(data => {
+      //process the response that got from sslcommerz 
+      //https://developer.sslcommerz.com/doc/v4/#returned-parameters
+     // console.log(data)
+    if(data.GatewayPageURL){
+      res.json(data.GatewayPageURL)
+    }
+    else{
+      return res.status(400).json({
+
+        message:"payment session failed"
+      })
+    }
+  });
+})
+app.post("/success",async(req,res)=>{
+   console.log(req.body)
+   const bookingCheck=bookingCollection.updateOne({tran_id:req.body.tran_id},{
+
+    $set:{
+      val_id:req.body.val_id
+    }
+   })
+  res.status(200).redirect(`http://localhost:3000/success/${req.body.tran_id}`)
+
+})
+app.post("/fail",async(req,res)=>{
+  const bookingCheck=bookingCollection.deleteOne({tran_id:req.body.tran_id})
+  res.status(200).redirect("http://localhost:3000")
+
+})
+app.post("/cancel",async(req,res)=>{
+  const bookingCheck=bookingCollection.deleteOne({tran_id:req.body.tran_id})
+  res.status(200).redirect("http://localhost:3000")
+
+})
+app.get("/booking/:tran_id",async(req,res)=>{
+  const id=req.params.tran_id;
+  const bookingInfo=await bookingCollection.findOne({tran_id:id})
+  console.log(bookingInfo)
+  res.json(bookingInfo)
+})
+app.post("/validate",async(req,res)=>{
+ 
+  const bookingInfo=await bookingCollection.findOne({tran_id:req.body.tran_id})
+  console.log(bookingInfo)
+  if(bookingInfo.val_id===req.body.val_id){
+    const update=await bookingCollection.updateOne({tran_id:req.body.tran_id},{
+
+      $set:{payment_status:"payed"}
+    })
+    res.send(update.modifiedCount>0)
+  }
+  else{
+    res.send("payment not confirmed.booking discard")
+  }
+})
 
     } finally {
       
