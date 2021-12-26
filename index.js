@@ -35,7 +35,8 @@ async function run() {
       const trandingCollection=database.collection("trandingSection");
       const nidCollection=database.collection("nidNumber");
       const hotelsCollection=database.collection("hotels");
-      const bookingCollection=database.collection("booking")
+      const bookingCollection=database.collection("booking");
+      const agencyPostCollection=database.collection("tourAgencyPost");
 
 
 
@@ -225,8 +226,18 @@ async function run() {
         const result = await userCollection.updateOne(filter, updateDoc);
         res.json(result);
       });
+      //add touragency to database
+      app.put("/users/agency",async(req,res)=>{
 
-       //get api for individual user
+        const user = req.body;
+        const filter = { email: user.email };
+  
+        const updateDoc = { $set: { role: "agency" } };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.json(result);
+      })
+
+       //get api for individual admin user
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
@@ -236,8 +247,24 @@ async function run() {
       if (user?.role === "admin") {
         isAdmin = true;
       }
-      //console.log(services);
+      
+    
       res.send({ admin: isAdmin });
+    });
+    //get api for individual agency user
+
+    app.get("/users/agency/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      // console.log(query);
+      const user = await userCollection.findOne(query);
+      let isAgency = false;
+      if (user?.role === "agency") {
+        isAgency = true;
+      }
+      
+    
+      res.send({ agency: isAgency });
     });
 
     //tranding section get 
@@ -257,6 +284,7 @@ async function run() {
       const result = await trandingCollection.insertOne(newTrandingPlace);
       res.json(result);
     })
+
     //nid number section
 
     app.put("/nid",async(req,res)=>{
@@ -300,6 +328,24 @@ async function run() {
       const hotels=await cursor.toArray();
       res.send(hotels)
     })
+
+    //post api for save agency post in database
+    app.post("/createagency",async(req,res)=>{
+
+      const agencyPost=req.body;
+      console.log(agencyPost)
+      const result = await agencyPostCollection.insertOne(agencyPost);
+      res.json(result);
+    })
+    //get api for get agency post
+    app.get("/createagency",async(req,res)=>{
+      const cursor = agencyPostCollection.find({});
+      const agencyPost = await cursor.toArray();
+      res.send(agencyPost);
+
+    })
+
+
  //payment getway api
  //payment initialize api
 app.post('/init', async (req, res) => {
